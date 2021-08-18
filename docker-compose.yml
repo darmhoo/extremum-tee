@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: altara_php
+    container_name: extremum_php
     tty: true
     environment:
       SERVICE_NAME: app
@@ -21,7 +21,7 @@ services:
   #Nginx Service
   webserver:
     image: nginx:alpine
-    container_name: altara_webserver
+    container_name: extremum_webserver
     tty: true
     ports:
       - "7070:80"
@@ -35,12 +35,12 @@ services:
   #MySQL Service
   db:
     image: mysql:5.7.22
-    container_name: altara_db
+    container_name: extremum_db
     tty: true
     ports:
       - "7072:3306"
     environment:
-      MYSQL_DATABASE: altara
+      MYSQL_DATABASE: extremum
       MYSQL_ROOT_PASSWORD: password
       SERVICE_TAGS: dev
       SERVICE_NAME: mysql
@@ -53,7 +53,7 @@ services:
 #Docker Networks
 networks:
   app-network:
-    name: altara
+    name: extremum
     driver: bridge
 #Volumes
 volumes:
