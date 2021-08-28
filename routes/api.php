@@ -10,7 +10,7 @@
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
+Route::post('/register', 'UserController@store');
 Route::post('/login', 'AuthController@login');
 Route::post('/password/reset', 'AuthController@sendResetLinkEmail');
 Route::put('/password/reset', 'AuthController@reset');
@@ -24,7 +24,6 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::post('/user/{id}/cv', 'UserController@uploadCV');
     Route::post('/logout', 'AuthController@logout');
     Route::get('/create', 'AuthController@create');
-    Route::post('/register', 'AuthController@register');
     Route::get('/employee/{id}/edit', 'AuthController@edit');
     Route::post('/employee/{id}/update', 'AuthController@update');
     Route::get('/reset-password/{id}', 'AuthController@resetPassword');

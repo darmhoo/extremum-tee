@@ -1,15 +1,13 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use App\Branch;
-use App\Counter;
-use App\EmployeeCategory;
 use App\Role;
 use App\User;
 use DateTime;
 use Hash;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Hash as FacadesHash;
 use Illuminate\Support\Facades\Storage;
 use Validator;
 
@@ -31,42 +29,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        /** fetch the user object empty form*/
-        $form = User::form();
-        /** fetch the available roles*/
-        $roles = Role::orderBy('name', 'asc')->get();
-        /** fetch the branches*/
-        $branches = Branch::orderBy('name', 'asc')->get();
-        /** fetch the employee categories */
-        $categories = EmployeeCategory::orderBy('name', 'asc')->get();
-        /** return values*/
-        return response()->json([
-            'form' => $form,
-            'roles' => $roles,
-            'branches' => $branches,
-            'categories' => $categories
-        ]);
-    }
 
-    public function getListForTypeahead($type)
-    {
-        $users = null;
-        switch ($type) {
-            case 'type_ahead':
-                $users = User::where('date_of_exit', '=', '')
-                    ->orWhereNull('date_of_exit')
-                    ->whereIn('role_id', [15, 17, 18])
-                    ->select('id', 'full_name')
-                    ->orderBy('full_name')
-                    ->get();
-                break;
-        }
-        return response()->json([
-            'users' => $users
-        ]);
-    }
 
     public function store(Request $request)
     {
@@ -74,65 +37,28 @@ class UserController extends Controller
 
         /** perform other validations*/
         $request->validate([
-            'email' => 'unique:users',
+            'email' => 'unique:users|email',
             'phone_number' => 'unique:users',
-            'date_of_birth' => 'older_than:18',
-            'guarantor_phone_no' => 'unique:users',
-            'guarantor_phone_no_2' => 'unique:users'
+
         ]);
 
-        if ($request->hasFile('cv') && $request->file('cv')->isValid()) {
-            $request->validate([
-                'cv' => 'mimes:pdf|max:10000'
-            ]);
-            $image = $request->file('cv');
-            $filename = 'cv' . '/' . str_slug($request->full_name) . '-' . date('d-m-Y');
-            $s3 = Storage::disk('s3');
-            $s3->put($filename, file_get_contents($image), 'public');
-            $request['cv_url'] = $filename;
-        }
+
 
         $user = new User;
-        $user->fill($request->except(['cv', 'transfer']));
-        $gen_password = str_random(8);
-        /** encrypt the password*/
-        $user->password = bcrypt($gen_password);
-        /** generate a staff ID for the user*/
-        $user->staff_id = $this->generateStaffID($request->category, $request->role);
-        /** add the id of the hr that created the staff*/
-        $user->hr_id = auth('api')->user()->id;
-        /** save the user instance to db*/
+        $user->email = $request['email'];
+        $user->name = $request['name'];
+
+        $user->password = FacadesHash::make($request['password']);
+
         $user->save();
-        /** fetch the user object empty form*/
-        $form = User::form();
-        /** return values including password etc*/
+
         return response()->json([
-            'form' => $form,
             'success' => true,
-            'password' => $gen_password,
-            'staff_id' => $user->staff_id
+
         ]);
     }
 
-    public function edit($id)
-    {
-        /** fetch the user */
-        $user = User::find($id);
-        $user['cv'] = '';
-        /** fetch employee category*/
-        $categories = EmployeeCategory::orderBy('name', 'asc')->get();
-        /** fetch roles*/
-        $roles = Role::select('name', 'id')->orderBy('name', 'asc')->get();
-        /** fetch branches*/
-        $branches = Branch::select('name', 'id')->orderBy('name', 'asc')->get();
-        /** return values including the user*/
-        return response()->json([
-            'form' => $user,
-            'roles' => $roles,
-            'branches' => $branches,
-            'categories' => $categories
-        ]);
-    }
+
 
     public function show($id)
     {

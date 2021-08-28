@@ -8,6 +8,7 @@ use App\Repositories\AuthRepository;
 use App\User;
 use Hash;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Validator;
 
 class AuthController extends Controller
@@ -30,10 +31,10 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $message = 'Check your login details and try again!';
-        $user = User::where('staff_id', $request->staff_id)->first();
+        $user = User::where('email', $request->email)->first();
 
         if (!$user) return response()->json([
-            'staff_id' => ['The combination does not exist in our record!'],
+            'email' => ['The combination does not exist in our record!'],
             'message' => $message
         ], 404);
 
@@ -46,15 +47,15 @@ class AuthController extends Controller
                     'auth' => true,
                     'role' => $user->role_id,
                     'api_token' => $user->api_token,
-                    'user_name' => $user->full_name,
+                    'user_name' => $user->name,
                     'portal_access' => $user->portal_access,
-                    'branch_id' => $user->branch_id,
+
 
                     'message' => 'You have successfully logged in'
                 ]);
             }
             return response()->json([
-                'staff_id' => ['Provided staff id and password does not match'],
+                'email' => ['Provided email and password does not match'],
                 'message' => $message
             ], 401);
         } else {
