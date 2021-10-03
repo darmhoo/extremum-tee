@@ -10,6 +10,9 @@
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+use App\Http\Controllers\CarController;
+
 Route::post('/register', 'UserController@store');
 Route::post('/login', 'AuthController@login');
 Route::post('/password/reset', 'AuthController@sendResetLinkEmail');
@@ -19,9 +22,9 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::Resources([
         'user' => 'UserController',
     ]);
+    Route::resource('car', 'CarController', ['except' => ['index', 'show']]);
     /*------*/
     Route::get('/users/list_type/{type}', 'UserController@getListForTypeahead');
-    Route::post('/user/{id}/cv', 'UserController@uploadCV');
     Route::post('/logout', 'AuthController@logout');
     Route::get('/create', 'AuthController@create');
     Route::get('/employee/{id}/edit', 'AuthController@edit');
@@ -29,5 +32,8 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/reset-password/{id}', 'AuthController@resetPassword');
 
 });
+
+Route::resource('car', 'CarController', ['only' => ['index', 'show']]);
+
 
 
