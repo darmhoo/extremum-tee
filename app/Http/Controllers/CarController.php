@@ -3,84 +3,80 @@
 namespace App\Http\Controllers;
 
 use App\Car;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Category;
+use App\Http\Filters\CarFilter;
+use App\Http\Requests\CarRequest;
+use App\Repositories\CarRepository;
+use Illuminate\Http\Response;
 
 class CarController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    private $carRepo;
+
+    public function __construct(CarRepository $carRepository)
     {
-        //
+        $this->carRepo = $carRepository;
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
-    public function create()
+    public function index(CarFilter $filter)
     {
-        //
+        $cars = $this->carRepo->getAll($filter);
+
+        return $this->sendSuccess($cars->toArray(), 'Cars retrieved successfully');
     }
+
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param CategoryRequest $request
+     * @return Response
      */
-    public function store(Request $request)
+    public function store(CarRequest $request)
     {
-        //
+        $car = $this->carRepo->store($request->validated());
+
+        return $this->sendSuccess($car->toArray(), 'Car Successfully Created');
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Car  $car
-     * @return \Illuminate\Http\Response
+     * @param Category $category
+     * @return Response
      */
     public function show(Car $car)
     {
-        //
+        return $this->sendSuccess($car->toArray(), 'Car retrieved successfully');
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * @param Category $category
+     * @param CategoryRequest $request
      *
-     * @param  \App\Car  $car
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
-    public function edit(Car $car)
+    public function update(Car $car, CarRequest $request)
     {
-        //
+        $car = $this->carRepo->update($car, $request->validated());
+
+        return $this->sendSuccess($car->toArray(), 'Car updated successfully');
     }
 
     /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Car  $car
-     * @return \Illuminate\Http\Response
+     * @param Category $category
+     * @return Response
+     * @throws \Exception
      */
-    public function update(Request $request, Car $car)
+    public function destroy(Car $category)
     {
-        //
-    }
+        $category->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Car  $car
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Car $car)
-    {
-        //
+        return $this->sendSuccess([],'Car deleted successfully');
     }
 }

@@ -45,6 +45,15 @@ abstract class Repository
         return $resp;
     }
 
+    public function getAll($filter)
+    {
+        return $this->model::latest()->filter($filter)->paginate($this->limit);
+    }
+    public function query($filter)
+    {
+        return $this->model::filter($filter)->paginate($this->limit);
+    }
+
     public function store(array $data) {
         $result = $this->model::create($data);
         return $result;

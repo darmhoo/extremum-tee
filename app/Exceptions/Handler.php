@@ -2,9 +2,18 @@
 
 namespace App\Exceptions;
 
-use Exception;
+use App\Helper\ResponseCodes;
+use App\Helper\ResponseHelper;
+use App\Helper\ResponseMessages;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Exception;
 
 class Handler extends ExceptionHandler
 {
@@ -29,36 +38,49 @@ class Handler extends ExceptionHandler
 
     /**
      * Report or log an exception.
-     *
-     * @param  \Exception  $exception
-     * @return void
+     *=
+     * @param Exception $e
+     * @return void=
+     * @throws Exception
      */
-    public function report(Exception $exception)
+    public function report(Exception $e)
     {
-        parent::report($exception);
+        parent::report($e);
     }
 
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @param Exception $e
+     * @return Response
      */
     public function render($request, Exception $e)
     {
-        if ($e instanceof ValidationException) {
-            $data = [
-                "errors" => $e->validator->getMessageBag()->getMessages(),
-                "error_message" => $e->getMessage()
-            ];
-            return response()->json($data, 403);
+        if ($e instanceof AException) {
+            return ResponseHelper::createErrorResponse($e->getMessage(), $e->getCode(), [
+                'errors' => $e->getErrorMessages()
+            ]);
+        } elseif ($e instanceof ValidationException) {//handle validation errors
+            $data = ["errors" => $e->validator->getMessageBag()->getMessages()];
+            return ResponseHelper::createErrorResponse(ResponseMessages::FAILED_VALIDATION, ResponseCodes::FAILED_VALIDATION, $data, ResponseCodes::UNPROCESSABLE_ENTITY);
+        } elseif ($e instanceof ModelNotFoundException) {
+            return ResponseHelper::createErrorResponse(
+                ResponseMessages::RESOURCE_NOT_FOUND, ResponseCodes::RESOURCE_NOT_FOUND
+            );
+        } elseif ($e instanceof MethodNotAllowedHttpException) {
+            return ResponseHelper::createErrorResponse(
+                ResponseMessages::ROUTE_NOT_FOUND, ResponseCodes::ROUTE_NOT_FOUND, [], 404
+            );
+        } elseif ($e instanceof AuthenticationException) {
+            return ResponseHelper::createErrorResponse($e->getMessage(), ResponseCodes::RESOURCE_AUTHORISATION_ERROR, [], ResponseCodes::UNAUTHENTICATED);
         } else {
-            $data = [
-                "errors" => [],
-                "error_message" => $e->getMessage()
-            ];
-            return response()->json($data, 400);
+            return ResponseHelper::createErrorResponse(
+                ResponseMessages::EXCEPTION_THROWN, ResponseCodes::EXCEPTION_THROWN,
+                [
+                    "error_message" => $e->getMessage()
+                ], 400
+            );
         }
     }
 }
